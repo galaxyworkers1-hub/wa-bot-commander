@@ -1,0 +1,6 @@
+node_modules/
+.env
+uploads/
+wa-session/
+*.log
+.DS_Store
