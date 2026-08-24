@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Bot Commander</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0f0d;
+            --bg-secondary: #111a16;
+            --bg-card: #162019;
+            --bg-card-hover: #1c2a22;
+            --border: #243d2e;
+            --border-light: #2f5240;
+            --accent: #00e676;
+            --accent-dim: #00c853;
+            --accent-glow: rgba(0,230,118,0.15);
+            --accent-glow-strong: rgba(0,230,118,0.3);
+            --text-primary: #e8f5e9;
+            --text-secondary: #81c784;
+            --text-muted: #4a7c5c;
+            --danger: #ff5252;
+            --danger-dim: rgba(255,82,82,0.15);
+            --warning: #ffab40;
+            --warning-dim: rgba(255,171,64,0.15);
+            --info: #40c4ff;
+            --info-dim: rgba(64,196,255,0.15);
+            --success: #69f0ae;
+            --success-dim: rgba(105,240,174,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        .bg-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-glow-1 { top: -100px; right: -100px; background: rgba(0,230,118,0.08); }
+        .bg-glow-2 { bottom: -150px; left: -100px; background: rgba(0,200,83,0.06); }
+
+        /* LOGIN */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 400px;
+            max-width: 90vw;
+            text-align: center;
+        }
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--bg-primary);
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 32px var(--accent-glow-strong);
+        }
+        .login-box h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+        .login-error {
+            font-size: 12px;
+            color: var(--danger);
+            margin-bottom: 12px;
+            display: none;
+            background: var(--danger-dim);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: var(--bg-primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* FORMS */
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-textarea { resize: vertical; min-height: 80px; }
+        .form-select { cursor: pointer; appearance: none; }
+        .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        .btn-primary:hover {
+            background: var(--accent-dim);
+            box-shadow: 0 4px 20px var(--accent-glow-strong);
+            transform: translateY(-1px);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .btn-danger {
+            background: var(--danger-dim);
+            color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-success {
+            background: var(--success-dim);
+            color: var(--success);
+        }
+        .btn-success:hover {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        .btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 8px; }
+        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .btn-full { width: 100%; justify-content: center; }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-logo {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--bg-primary);
+            box-shadow: 0 4px 20px var(--accent-glow-strong);
+        }
+        .logo-text h2 { font-size: 16px; font-weight: 700; line-height: 1.2; }
+        .logo-text span { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+        .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+        .nav-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 12px 12px 8px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-glow); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+        .nav-item i { width: 20px; text-align: center; font-size: 14px; }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .nav-badge.warning { background: var(--warning); color: var(--bg-primary); }
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .sidebar-logout {
+            margin-left: auto;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        .sidebar-logout:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
+
+        /* MAIN CONTENT */
+        .main-content { margin-left: 260px; position: relative; z-index: 1; min-height: 100vh; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(10,15,13,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+        .page-title { font-size: 18px; font-weight: 700; }
+        .page-subtitle { font-size: 12px; color: var(--text-muted); }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .bot-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .bot-status.online { background: var(--success-dim); color: var(--success); }
+        .bot-status.offline { background: var(--danger-dim); color: var(--danger); }
+        .bot-status .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .page-content { padding: 28px; }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+        .card:hover { border-color: var(--border-light); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .card-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-header h3 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .card-header h3 i { color: var(--accent); font-size: 15px; }
+        .card-body { padding: 20px; }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+        .stat-card:hover { border-color: var(--border-light); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; border-radius: 50%; filter: blur(40px); opacity: 0.15; }
+        .stat-card.green::after { background: var(--accent); }
+        .stat-card.blue::after { background: var(--info); }
+        .stat-card.orange::after { background: var(--warning); }
+        .stat-card.red::after { background: var(--danger); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 14px; }
+        .stat-icon.green { background: var(--success-dim); color: var(--success); }
+        .stat-icon.blue { background: var(--info-dim); color: var(--info); }
+        .stat-icon.orange { background: var(--warning-dim); color: var(--warning); }
+        .stat-icon.red { background: var(--danger-dim); color: var(--danger); }
+        .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; margin-bottom: 4px; }
+        .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* TABLE */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .data-table td {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(36,61,46,0.4);
+            vertical-align: middle;
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: rgba(0,230,118,0.02); }
+        .user-cell { display: flex; align-items: center; gap: 10px; }
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-phone { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-badge.active { background: var(--success-dim); color: var(--success); }
+        .status-badge.pending { background: var(--warning-dim); color: var(--warning); }
+        .status-badge.rejected { background: var(--danger-dim); color: var(--danger); }
+        .status-badge.expired { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+        .status-badge .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .tab-btn:hover { color: var(--text-secondary); }
+        .tab-btn.active { background: var(--accent-glow); color: var(--accent); }
+
+        /* CHAT PREVIEW */
+        .chat-preview {
+            background: #0b141a;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .chat-header-preview {
+            background: #1f2c34;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chat-avatar-preview {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 16px;
+        }
+        .chat-name-preview { font-size: 14px; font-weight: 600; color: #e9edef; }
+        .chat-status-preview { font-size: 11px; color: #8696a0; }
+        .chat-body-preview {
+            padding: 16px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chat-msg {
+            max-width: 85%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.45;
+            animation: msgSlide 0.3s ease;
+        }
+        @keyframes msgSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-msg.incoming {
+            background: #202c33;
+            color: #e9edef;
+            border-top-left-radius: 3px;
+            margin-right: auto;
+        }
+        .chat-msg.outgoing {
+            background: #005c4b;
+            color: #e9edef;
+            border-top-right-radius: 3px;
+            margin-left: auto;
+        }
+        .chat-msg .msg-time {
+            font-size: 10px;
+            color: rgba(255,255,255,0.45);
+            text-align: right;
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .chat-input-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #1f2c34;
+            border-top: 1px solid #2a3942;
+        }
+        .chat-input-preview input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #e9edef;
+            font-size: 13px;
+            outline: none;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .chat-input-preview i { color: #8696a0; font-size: 18px; }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: scale(0.95) translateY(10px);
+            transition: transform 0.25s;
+        }
+        .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-header h3 { font-size: 16px; font-weight: 700; }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: var(--danger-dim); color: var(--danger); }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* TOGGLE */
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle-switch.active { background: var(--accent); }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .toggle-switch.active::after { left: 23px; }
+
+        /* TOAST */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+            animation: toastIn 0.35s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            border: 1px solid;
+        }
+        .toast.success { background: #0d2818; border-color: #1a4d2e; color: var(--success); }
+        .toast.error { background: #2a0f0f; border-color: #4d1a1a; color: var(--danger); }
+        .toast.info { background: #0f1f2a; border-color: #1a334d; color: var(--info); }
+        .toast.warning { background: #2a1f0f; border-color: #4d3a1a; color: var(--warning); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .toast-exit { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(40px); }
+        }
+
+        /* LOGS */
+        .log-entry {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(36,61,46,0.3);
+            font-size: 12.5px;
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .log-time {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 11px;
+            white-space: nowrap;
+            min-width: 70px;
+        }
+        .log-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        .log-icon.sent { background: var(--success-dim); color: var(--success); }
+        .log-icon.received { background: var(--info-dim); color: var(--info); }
+        .log-icon.error { background: var(--danger-dim); color: var(--danger); }
+        .log-icon.system { background: var(--warning-dim); color: var(--warning); }
+
+        /* SETTING ROW */
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(36,61,46,0.3);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-info h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .setting-info p { font-size: 11.5px; color: var(--text-muted); }
+
+        /* CHART */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 10px 0;
+        }
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .chart-bar {
+            width: 100%;
+            max-width: 36px;
+            border-radius: 6px 6px 2px 2px;
+            background: linear-gradient(to top, var(--accent-dim), var(--accent));
+            transition: all 0.5s ease;
+            min-height: 4px;
+            opacity: 0.7;
+        }
+        .chart-bar:hover { opacity: 1; transform: scaleY(1.05); transform-origin: bottom; }
+        .chart-bar-label { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+        /* PAGE SECTIONS */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45; }
+        .sidebar-overlay.show { display: block; }
+
+        /* QR */
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-muted);
+        }
+        .qr-placeholder i { font-size: 48px; opacity: 0.4; }
+
+        /* REPLY CARDS GRID */
+        .replies-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* LOADING SKELETON */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .mobile-menu-btn { display: block; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .page-content { padding: 16px; }
+            .topbar { padding: 12px 16px; }
+            .replies-grid { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-logo"><i class="fab fa-whatsapp"></i></div>
+            <h2>WA Bot Commander</h2>
+            <p>Admin Dashboard Login</p>
+            <div class="login-error" id="loginError">Invalid username or password</div>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="loginUser" placeholder="Enter username" autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="loginPass" placeholder="Enter password" onkeypress="if(event.key==='Enter')doLogin()">
+            </div>
+            <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">
+                <span id="loginText">Sign In</span>
+                <span id="loginLoading" style="display:none;align-items:center;gap:8px;"><div class="spinner"></div> Signing in...</span>
+            </button>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:16px;">Default: admin / Admin@123</p>
+        </div>
+    </div>
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon"><i class="fab fa-whatsapp"></i></div>
+            <div class="logo-text">
+                <h2>WA Bot Commander</h2>
+                <span>v1.0.0</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard',this)">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </div>
+            <div class="nav-item" data-page="payments" onclick="switchPage('payments',this)">
+                <i class="fas fa-credit-card"></i> Payments
+                <span class="nav-badge" id="pendingBadge">0</span>
+            </div>
+            <div class="nav-item" data-page="users" onclick="switchPage('users',this)">
+                <i class="fas fa-users"></i> Users
+            </div>
+            <div class="nav-section-label">Bot</div>
+            <div class="nav-item" data-page="replies" onclick="switchPage('replies',this)">
+                <i class="fas fa-comment-dots"></i> Auto Replies
+            </div>
+            <div class="nav-item" data-page="chatpreview" onclick="switchPage('chatpreview',this)">
+                <i class="fas fa-eye"></i> Chat Preview
+            </div>
+            <div class="nav-item" data-page="logs" onclick="switchPage('logs',this)">
+                <i class="fas fa-list-alt"></i> Logs
+            </div>
+            <div class="nav-section-label">System</div>
+            <div class="nav-item" data-page="connection" onclick="switchPage('connection',this)">
+                <i class="fas fa-plug"></i> Connection
+                <span class="nav-badge warning" id="connBadge">OFF</span>
+            </div>
+            <div class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
+                <i class="fas fa-cog"></i> Settings
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-avatar">A</div>
+            <div>
+                <div style="font-size:13px;font-weight:600;">Admin</div>
+                <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">superadmin</div>
+            </div>
+            <button class="sidebar-logout" onclick="doLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                <div>
+                    <div class="page-title" id="pageTitle">Dashboard</div>
+                    <div class="page-subtitle" id="pageSubtitle">Overview</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="bot-status offline" id="botStatusBadge">
+                    <div class="pulse"></div>
+                    <span id="botStatusText">OFFLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+
+            <!-- ========== DASHBOARD ========== -->
+            <section class="page-section active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card green">
+                        <div class="stat-icon green"><i class="fas fa-users"></i></div>
+                        <div class="stat-value" id="statUsers">-</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+                        <div class="stat-value" id="statMessages">-</div>
+                        <div class="stat-label">Messages Sent</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                        <div class="stat-value" id="statPending">-</div>
+                        <div class="stat-label">Pending Payments</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon red"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-value" id="statActive">-</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px;">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-chart-bar"></i> Messages This Week</h3></div>
+                        <div class="card-body"><div class="chart-container" id="msgChart"></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-bolt"></i> Recent Activity</h3></div>
+                        <div class="card-body" id="recentActivity" style="padding:12px 20px;max-height:250px;overflow-y:auto;">
+                            <p style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clock"></i> Pending Approvals</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="switchPage('payments',document.querySelector('[data-page=payments]'))">View All <i class="fas fa-arrow-right" style="font-size:10px;"></i></button>
+                    </div>
+                    <div class="card-body" style="padding:0;">
+                        <table class="data-table">
+                            <thead><tr><th>User</th><th>Amount</th><th>Plan</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody id="dashPendingTable">
+                                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== PAYMENTS ========== -->
+            <section class="page-section" id="page-payments">
+                <div class="tabs" id="paymentTabs">
+                    <button class="tab-btn active" onclick="filterPayments('all',this)">All</button>
+                    <button class="tab-btn" onclick="filterPayments('pending',this)">Pending</button>
+                    <button class="tab-btn" onclick="filterPayments('approved',this)">Approved</button>
+                    <button class="tab-btn" onclick="filterPayments('rejected',this)">Rejected</button>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-credit-card"></i> Payment Management</h3>
+                        <input type="text" class="form-input" style="width:200px;padding:7px 12px;font-size:12px;" placeholder="Search..." id="paymentSearch" oninput="renderPayments()">
+                    </div>
+                    <div class="card-body" style="padding:0;">
+                        <table class="data-table">
+                            <thead><tr><th>User</th><th>Phone</th><th>Amount</th><th>Plan</th><th>Receipt</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="paymentsTableBody">
+                                <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== USERS ========== -->
+            <section class="page-section" id="page-users">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                    <div class="tabs" id="userTabs" style="margin-bottom:0;">
+                        <button class="tab-btn active" onclick="filterUsers('all',this)">All</button>
+                        <button class="tab-btn" onclick="filterUsers('active',this)">Active</button>
+                        <button class="tab-btn" onclick="filterUsers('expired',this)">Expired</button>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('addUserModal')"><i class="fas fa-plus"></i> Add User</button>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-users"></i> Users</h3>
+                        <input type="text" class="form-input" style="width:220px;padding:7px 12px;font-size:12px;" placeholder="Search..." id="userSearch" oninput="renderUsers()">
+                    </div>
+                    <div class="card-body" style="padding:0;">
+                        <table class="data-table">
+                            <thead><tr><th>User</th><th>Phone</th><th>Plan</th><th>Status</th><th>Expires</th><th>Actions</th></tr></thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== AUTO REPLIES ========== -->
+            <section class="page-section" id="page-replies">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h3 style="font-size:15px;font-weight:700;">Auto-Reply Rules</h3>
+                    <button class="btn btn-primary" onclick="openModal('addReplyModal')"><i class="fas fa-plus"></i> New Rule</button>
+                </div>
+                <div class="replies-grid" id="repliesGrid">
+                    <p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px;">Loading...</p>
+                </div>
+            </section>
+
+            <!-- ========== CHAT PREVIEW ========== -->
+            <section class="page-section" id="page-chatpreview">
+                <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+                    <div>
+                        <div class="card" style="margin-bottom:20px;">
+                            <div class="card-header"><h3><i class="fas fa-play-circle"></i> Test Conversation</h3></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Simulated Phone</label>
+                                    <input type="text" class="form-input" value="+94 77 123 4567" id="simPhone">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Message</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" class="form-input" id="simMessage" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendSimMessage()">
+                                        <button class="btn btn-primary" onclick="sendSimMessage()"><i class="fas fa-paper-plane"></i></button>
+                                    </div>
+                                </div>
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('hi')">hi</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('menu')">menu</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('price')">price</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('help')">help</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('pay')">pay</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="quickSim('thank you')">thank you</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3><i class="fas fa-info-circle"></i> Matched Rule</h3></div>
+                            <div class="card-body" id="matchedRuleInfo">
+                                <p style="font-size:13px;color:var(--text-muted);">Send a message to test...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-preview">
+                        <div class="chat-header-preview">
+                            <div class="chat-avatar-preview"><i class="fas fa-robot"></i></div>
+                            <div>
+                                <div class="chat-name-preview">Your Bot</div>
+                                <div class="chat-status-preview">online</div>
+                            </div>
+                        </div>
+                        <div class="chat-body-preview" id="chatBody">
+                            <div class="chat-msg outgoing" style="text-align:center;max-width:100%;background:transparent;color:#8696a0;font-size:11px;padding:4px 0;">Chat preview - send a message</div>
+                        </div>
+                        <div class="chat-input-preview">
+                            <i class="fas fa-smile"></i>
+                            <input type="text" placeholder="Type a message" readonly>
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== LOGS ========== -->
+            <section class="page-section" id="page-logs">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list-alt"></i> Activity Logs</h3>
+                        <div style="display:flex;gap:8px;">
+                            <select class="form-select" style="width:140px;padding:6px 10px;font-size:12px;" id="logFilter" onchange="renderLogs()">
+                                <option value="all">All Types</option>
+                                <option value="sent">Sent</option>
+                                <option value="received">Received</option>
+                                <option value="error">Errors</option>
+                                <option value="system">System</option>
+                            </select>
+                            <button class="btn btn-ghost btn-sm" onclick="clearLogs()"><i class="fas fa-trash"></i> Clear</button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="logsContainer" style="max-height:500px;overflow-y:auto;">
+                        <p style="text-align:center;color:var(--text-muted);">Loading...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== CONNECTION ========== -->
+            <section class="page-section" id="page-connection">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-qrcode"></i> WhatsApp QR Code</h3></div>
+                        <div class="card-body" style="text-align:center;">
+                            <div class="qr-placeholder" id="qrPlaceholder">
+                                <i class="fas fa-qrcode"></i>
+                                <span>Waiting for server...</span>
+                            </div>
+                            <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">QR appears in Terminal. Scan: WhatsApp > Linked Devices > Link</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-info-circle"></i> Connection Info</h3></div>
+                        <div class="card-body">
+                            <div class="setting-row">
+                                <div class="setting-info"><h4>Status</h4></div>
+                                <span class="status-badge expired" id="connStatus"><span class="dot-sm"></span> Disconnected</span>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-info"><h4>Phone</h4></div>
+                                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);" id="connPhone">-</span>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-info"><h4>Push Name</h4></div>
+                                <span style="font-size:12px;color:var(--text-muted);" id="connName">-</span>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-info"><h4>Uptime</h4></div>
+                                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);" id="connUptime">0m 0s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== SETTINGS ========== -->
+            <section class="page-section" id="page-settings">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-database"></i> Database</h3></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Connection String</label>
+                                <input type="text" class="form-input" id="dbConnStr" value="mongodb://localhost:27017/wabot" style="font-family:'JetBrains Mono',monospace;font-size:12px;" readonly>
+                            </div>
+                            <button class="btn btn-primary btn-full" onclick="testDB()"><i class="fas fa-plug"></i> Test Connection</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-shield-alt"></i> Security</h3></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">API Secret</label>
+                                <input type="text" class="form-input" value="sk_wabot_*****" style="font-family:'JetBrains Mono',monospace;font-size:12px;" readonly>
+                            </div>
+                            <p style="font-size:11px;color:var(--text-muted);">Change secrets in .env file on server</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Danger Zone</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h4 style="font-size:13px;font-weight:600;color:var(--danger);">Clear All Logs from Database</h4>
+                                <p style="font-size:12px;color:var(--text-muted);">Permanently delete all activity logs</p>
+                            </div>
+                            <button class="btn btn-danger" onclick="clearLogs()"><i class="fas fa-trash"></i> Clear Logs</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Add User</h3>
+                <button class="modal-close" onclick="closeModal('addUserModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="newUserName" placeholder="User name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-input" id="newUserPhone" placeholder="+94 77 XXX XXXX">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Plan</label>
+                    <select class="form-select" id="newUserPlan">
+                        <option value="free">Free</option>
+                        <option value="basic">Basic - Rs.500/mo</option>
+                        <option value="pro">Pro - Rs.1200/mo</option>
+                        <option value="premium">Premium - Rs.3000/mo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duration (days, 0 = no access)</label>
+                    <input type="number" class="form-input" id="newUserDays" value="30" min="0" max="365">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addUser()"><i class="fas fa-plus"></i> Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Reply Rule Modal -->
+    <div class="modal-overlay" id="addReplyModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>New Reply Rule</h3>
+                <button class="modal-close" onclick="closeModal('addReplyModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Rule Name</label>
+                    <input type="text" class="form-input" id="ruleName" placeholder="e.g. Greeting">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Match Type</label>
+                    <select class="form-select" id="ruleType">
+                        <option value="contains">Contains</option>
+                        <option value="exact">Exact Match</option>
+                        <option value="regex">Regex</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Keyword / Pattern</label>
+                    <input type="text" class="form-input" id="ruleKeyword" placeholder="e.g. hello">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Response Message</label>
+                    <textarea class="form-textarea" id="ruleResponse" rows="4" placeholder="Bot's reply message..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('addReplyModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addReplyRule()"><i class="fas fa-plus"></i> Add Rule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Receipt Modal -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal-box" style="max-width:420px;">
+            <div class="modal-header">
+                <h3>Payment Receipt</h3>
+                <button class="modal-close" onclick="closeModal('receiptModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="text-align:center;" id="receiptContent"></div>
+        </div>
+    </div>
+
+    <!-- View User Modal -->
+    <div class="modal-overlay" id="viewUserModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>User Details</h3>
+                <button class="modal-close" onclick="closeModal('viewUserModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="viewUserContent"></div>
+        </div>
+    </div>
+
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+    // ============================================
+    // CONFIG
+    // ============================================
+    const API = 'http://localhost:5000/api';
+    let token = localStorage.getItem('wabot_token') || '';
+    let socket = null;
+    let repliesCache = [];
+    let paymentsCache = [];
+    let usersCache = [];
+    let uptimeSeconds = 0;
+    let uptimeInterval = null;
+
+    // ============================================
+    // API HELPER - backend එකට request යවන්න
+    // ============================================
+    async function api(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        try {
+            const res = await fetch(API + endpoint, { ...options, headers });
+            const data = await res.json();
+            // Token expire උනාම login එකට යවන්න
+            if (res.status === 401) { doLogout(); return null; }
+            if (!res.ok) { showToast(data.error || 'Request failed', 'error'); return null; }
+            return data;
+        } catch (error) {
+            showToast('Cannot connect to server. Is it running on port 5000?', 'error');
+            return null;
+        }
+    }
+
+    // ============================================
+    // TOAST NOTIFICATIONS
+    // ============================================
+    function showToast(message, type) {
+        type = type || 'info';
+        const container = document.getElementById('toastContainer');
+        const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle', warning: 'fa-exclamation-triangle' };
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        toast.innerHTML = '<i class="fas ' + icons[type] + '"></i> ' + message;
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.classList.add('toast-exit');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3500);
+    }
+
+    // ============================================
+    // LOGIN / LOGOUT
+    // ============================================
+    async function doLogin() {
+        var username = document.getElementById('loginUser').value.trim();
+        var password = document.getElementById('loginPass').value;
+        if (!username || !password) {
+            document.getElementById('loginError').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('loginText').style.display = 'none';
+        document.getElementById('loginLoading').style.display = 'flex';
+
+        var data = await api('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: username, password: password })
+        });
+
+        if (data && data.token) {
+            token = data.token;
+            localStorage.setItem('wabot_token', token);
+            document.getElementById('loginScreen').style.display = 'none';
+            initApp();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+            document.getElementById('loginText').style.display = 'inline';
+            document.getElementById('loginLoading').style.display = 'none';
+        }
+    }
+
+    function doLogout() {
+        token = '';
+        localStorage.removeItem('wabot_token');
+        if (socket) { socket.disconnect(); socket = null; }
+        if (uptimeInterval) { clearInterval(uptimeInterval); uptimeInterval = null; }
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginText').style.display = 'inline';
+        document.getElementById('loginLoading').style.display = 'none';
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+    }
+
+    // ============================================
+    // APP INIT - login උනාට පස්සේ run වෙන්න
+    // ============================================
+    async function initApp() {
+        // Token valid ද බලන්න
+        var valid = await api('/auth/verify');
+        if (!valid || !valid.valid) { doLogout(); return; }
+
+        // Socket.io connect - real-time updates සඳහා
+        connectSocket();
+
+        // Dashboard load කරන්න
+        await loadDashboard();
+        showToast('Welcome back, Admin', 'success');
+    }
+
+    // ============================================
+    // SOCKET.IO - real-time connection updates
+    // ============================================
+    function connectSocket() {
+        if (socket) socket.disconnect();
+        try {
+            socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
+
+            socket.on('connection-status', function(data) {
+                updateConnectionUI(data);
+            });
+
+            socket.on('connect_error', function() {
+                // Silent fail - polling will retry
+            });
+        } catch (e) {
+            // Socket not available, that's ok
+        }
+    }
+
+    // ============================================
+    // CONNECTION UI UPDATE
+    // ============================================
+    function updateConnectionUI(data) {
+        var badge = document.getElementById('botStatusBadge');
+        var text = document.getElementById('botStatusText');
+        var connBadge = document.getElementById('connBadge');
+        var connStatus = document.getElementById('connStatus');
+        var qr = document.getElementById('qrPlaceholder');
+
+        if (data.connected) {
+            badge.className = 'bot-status online';
+            text.textContent = 'ONLINE';
+            connBadge.textContent = 'ON';
+            connBadge.className = 'nav-badge';
+            connStatus.className = 'status-badge active';
+            connStatus.innerHTML = '<span class="dot-sm"></span> Connected';
+            document.getElementById('connPhone').textContent = data.phone || '-';
+            document.getElementById('connName').textContent = data.pushName || '-';
+            qr.innerHTML = '<i class="fas fa-check-circle" style="font-size:48px;color:var(--success);"></i><span style="color:var(--success);font-weight:600;">Connected</span>';
+
+            // Uptime counter start
+            if (!uptimeInterval) {
+                uptimeSeconds = 0;
+                uptimeInterval = setInterval(function() {
+                    uptimeSeconds++;
+                    var m = Math.floor(uptimeSeconds / 60);
+                    var s = uptimeSeconds % 60;
+                    var h = Math.floor(m / 60);
+                    var rm = m % 60;
+                    if (h > 0) {
+                        document.getElementById('connUptime').textContent = h + 'h ' + rm + 'm ' + s + 's';
+                    } else {
+                        document.getElementById('connUptime').textContent = m + 'm ' + s + 's';
+                    }
+                }, 1000);
+            }
+        } else {
+            badge.className = 'bot-status offline';
+            text.textContent = 'OFFLINE';
+            connBadge.textContent = 'OFF';
+            connBadge.className = 'nav-badge warning';
+            connStatus.className = 'status-badge expired';
+            connStatus.innerHTML = '<span class="dot-sm"></span> Disconnected';
+            document.getElementById('connPhone').textContent = '-';
+            document.getElementById('connName').textContent = '-';
+
+            if (uptimeInterval) { clearInterval(uptimeInterval); uptimeInterval = null; }
+            document.getElementById('connUptime').textContent = '0m 0s';
+
+            if (data.status === 'qr_ready') {
+                qr.innerHTML = '<i class="fas fa-qrcode" style="font-size:48px;opacity:0.6;color:var(--accent);"></i><span style="color:var(--accent);font-weight:600;">QR Ready</span><span style="font-size:10px;">Check terminal to scan</span>';
+            } else {
+                qr.innerHTML = '<i class="fas fa-qrcode"></i><span>Disconnected</span>';
+            }
+        }
+    }
+
+    // ============================================
+    // DASHBOARD
+    // ============================================
+    async function loadDashboard() {
+        var stats = await api('/bot/stats');
+        if (stats) {
+            document.getElementById('statUsers').textContent = stats.totalUsers;
+            document.getElementById('statMessages').textContent = stats.totalMessages.toLocaleString();
+            document.getElementById('statPending').textContent = stats.pendingPayments;
+            document.getElementById('statActive').textContent = stats.activeUsers;
+            document.getElementById('pendingBadge').textContent = stats.pendingPayments;
+        }
+        renderChart();
+        loadRecentLogs();
+        loadDashPending();
+        checkConnectionStatus();
+    }
+
+    function renderChart() {
+        var c = document.getElementById('msgChart');
+        var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        var vals = [45, 62, 38, 71, 55, 82, 67];
+        var mx = Math.max.apply(null, vals);
+        var html = '';
+        for (var i = 0; i < days.length; i++) {
+            var h = Math.round((vals[i] / mx) * 100);
+            var o = (0.5 + (vals[i] / mx) * 0.5).toFixed(2);
+            html += '<div class="chart-bar-group"><div class="chart-bar" style="height:' + h + '%;opacity:' + o + ';"></div><div class="chart-bar-label">' + days[i] + '</div></div>';
+        }
+        c.innerHTML = html;
+    }
+
+    async function loadRecentLogs() {
+        var logs = await api('/bot/logs?limit=8');
+        var c = document.getElementById('recentActivity');
+        if (!logs || logs.length === 0) {
+            c.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">No activity yet</p>';
+            return;
+        }
+        var icons = { sent: 'fa-paper-plane', received: 'fa-inbox', error: 'fa-exclamation', system: 'fa-cog' };
+        var html = '';
+        for (var i = 0; i < logs.length; i++) {
+            var l = logs[i];
+            html += '<div class="log-entry"><span class="log-time">' + l.time + '</span><div class="log-icon ' + l.type + '"><i class="fas ' + (icons[l.type] || 'fa-info') + '"></i></div><span style="font-size:12px;color:var(--text-secondary);line-height:1.4;">' + l.message + '</span></div>';
+        }
+        c.innerHTML = html;
+    }
+
+    async function loadDashPending() {
+        paymentsCache = (await api('/payments')) || [];
+        var pending = [];
+        for (var i = 0; i < paymentsCache.length; i++) {
+            if (paymentsCache[i].status === 'pending') pending.push(paymentsCache[i]);
+        }
+        pending = pending.slice(0, 5);
+
+        var tbody = document.getElementById('dashPendingTable');
+        if (pending.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px;">No pending payments</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < pending.length; i++) {
+            var p = pending[i];
+            html += '<tr>';
+            html += '<td><div class="user-cell"><div class="user-avatar">' + p.userName.charAt(0) + '</div><div class="user-name">' + p.userName + '</div></div></td>';
+            html += '<td style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;">Rs.' + p.amount.toLocaleString() + '</td>';
+            html += '<td style="text-transform:capitalize;color:var(--text-secondary);font-size:12px;">' + p.plan + '</td>';
+            html += '<td><span class="status-badge pending"><span class="dot-sm"></span> Pending</span></td>';
+            html += '<td><div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="approvePayment(\'' + p._id + '\')"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" onclick="rejectPayment(\'' + p._id + '\')"><i class="fas fa-times"></i></button></div></td>';
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    async function checkConnectionStatus() {
+        var status = await api('/bot/status');
+        if (status) {
+            updateConnectionUI({
+                connected: status.connected,
+                phone: status.phone,
+                pushName: status.pushName,
+                status: status.connected ? 'connected' : 'disconnected'
+            });
+        }
+    }
+
+    // ============================================
+    // PAYMENTS
+    // ============================================
+    var paymentFilter = 'all';
+
+    function filterPayments(f, btn) {
+        paymentFilter = f;
+        var tabs = document.querySelectorAll('#paymentTabs .tab-btn');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        if (btn) btn.classList.add('active');
+        renderPayments();
+    }
+
+    async function renderPayments() {
+        if (paymentsCache.length === 0) {
+            paymentsCache = (await api('/payments')) || [];
+        }
+        var payments = paymentsCache.slice();
+        var search = (document.getElementById('paymentSearch') ? document.getElementById('paymentSearch').value : '').toLowerCase();
+
+        if (paymentFilter !== 'all') {
+            var filtered = [];
+            for (var i = 0; i < payments.length; i++) {
+                if (payments[i].status === paymentFilter) filtered.push(payments[i]);
+            }
+            payments = filtered;
+        }
+        if (search) {
+            var searched = [];
+            for (var i = 0; i < payments.length; i++) {
+                if (payments[i].userName.toLowerCase().indexOf(search) !== -1 || payments[i].userPhone.indexOf(search) !== -1) {
+                    searched.push(payments[i]);
+                }
+            }
+            payments = searched;
+        }
+
+        var tbody = document.getElementById('paymentsTableBody');
+        if (payments.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">No payments found</td></tr>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < payments.length; i++) {
+            var p = payments[i];
+            var date = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-';
+            var revDate = p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : '-';
+
+            var receiptBtn;
+            if (p.receiptUrl) {
+                receiptBtn = '<button class="btn btn-ghost btn-sm" onclick="viewReceipt(\'' + p.receiptUrl + '\',\'' + p.userName.replace(/'/g, "\\'") + '\',' + p.amount + ')"><i class="fas fa-image"></i> View</button>';
+            } else {
+                receiptBtn = '<span style="color:var(--text-muted);font-size:11px;">None</span>';
+            }
+
+            var actions;
+            if (p.status === 'pending') {
+                actions = '<div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="approvePayment(\'' + p._id + '\')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectPayment(\'' + p._id + '\')"><i class="fas fa-times"></i> Reject</button></div>';
+            } else {
+                actions = '<span style="font-size:11px;color:var(--text-muted);">' + revDate + '</span>';
+            }
+
+            html += '<tr>';
+            html += '<td><div class="user-cell"><div class="user-avatar">' + p.userName.charAt(0) + '</div><div class="user-name">' + p.userName + '</div></div></td>';
+            html += '<td style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--text-muted);">' + p.userPhone + '</td>';
+            html += '<td style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;">Rs.' + p.amount.toLocaleString() + '</td>';
+            html += '<td style="text-transform:capitalize;font-size:12px;color:var(--text-secondary);">' + p.plan + '</td>';
+            html += '<td>' + receiptBtn + '</td>';
+            html += '<td style="font-size:12px;color:var(--text-muted);">' + date + '</td>';
+            html += '<td><span class="status-badge ' + p.status + '"><span class="dot-sm"></span> ' + p.status.charAt(0).toUpperCase() + p.status.slice(1) + '</span></td>';
+            html += '<td>' + actions + '</td>';
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    async function approvePayment(id) {
+        var result = await api('/payments/' + id + '/approve', { method: 'PUT' });
+        if (result) {
+            showToast('Payment approved! User access granted.', 'success');
+            paymentsCache = [];
+            loadDashboard();
+            renderPayments();
+        }
+    }
+
+    async function rejectPayment(id) {
+        var result = await api('/payments/' + id + '/reject', { method: 'PUT' });
+        if (result) {
+            showToast('Payment rejected.', 'warning');
+            paymentsCache = [];
+            loadDashboard();
+            renderPayments();
+        }
+    }
+
+    function viewReceipt(url, name, amount) {
+        var baseUrl = API.replace('/api', '');
+        document.getElementById('receiptContent').innerHTML =
+            '<div style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><strong>' + name + '</strong> - Rs.' + amount.toLocaleString() + '</div>' +
+            '<img src="' + baseUrl + url + '" alt="Receipt" style="max-width:100%;border-radius:8px;border:1px solid var(--border);" onerror="this.outerHTML=\'<p style=padding:20px;color:var(--text-muted)>Image not found on server</p>\'">';
+        openModal('receiptModal');
+    }
+
+    // ============================================
+    // USERS
+    // ============================================
+    var userFilter = 'all';
+
+    function filterUsers(f, btn) {
+        userFilter = f;
+        var tabs = document.querySelectorAll('#userTabs .tab-btn');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        if (btn) btn.classList.add('active');
+        renderUsers();
+    }
+
+    async function renderUsers() {
+        if (usersCache.length === 0) {
+            usersCache = (await api('/users')) || [];
+        }
+        var users = usersCache.slice();
+        var search = (document.getElementById('userSearch') ? document.getElementById('userSearch').value : '').toLowerCase();
+
+        if (userFilter !== 'all') {
+            var filtered = [];
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].accessStatus === userFilter) filtered.push(users[i]);
+            }
+            users = filtered;
+        }
+        if (search) {
+            var searched = [];
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].name.toLowerCase().indexOf(search) !== -1 || users[i].phone.indexOf(search) !== -1) {
+                    searched.push(users[i]);
+                }
+            }
+            users = searched;
+        }
+
+        var tbody = document.getElementById('usersTableBody');
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px;">No users found</td></tr>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < users.length; i++) {
+            var u = users[i];
+            var exp = u.expiresAt ? new Date(u.expiresAt).toLocaleDateString() : '-';
+            var sc = u.accessStatus === 'active' ? 'active' : (u.accessStatus === 'banned' ? 'rejected' : 'expired');
+
+            html += '<tr>';
+            html += '<td><div class="user-cell"><div class="user-avatar">' + u.name.charAt(0) + '</div><div class="user-name">' + u.name + '</div></div></td>';
+            html += '<td style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--text-muted);">' + u.phone + '</td>';
+            html += '<td style="text-transform:capitalize;font-size:12px;color:var(--text-secondary);">' + u.plan + '</td>';
+            html += '<td><span class="status-badge ' + sc + '"><span class="dot-sm"></span> ' + u.accessStatus.charAt(0).toUpperCase() + u.accessStatus.slice(1) + '</span></td>';
+            html += '<td style="font-size:12px;color:var(--text-muted);font-family:JetBrains Mono,monospace;">' + exp + '</td>';
+            html += '<td><div style="display:flex;gap:6px;">';
+            html += '<button class="btn btn-ghost btn-icon btn-sm" onclick="viewUser(\'' + u._id + '\')" title="View"><i class="fas fa-eye"></i></button>';
+            html += '<button class="btn btn-ghost btn-icon btn-sm" onclick="toggleUserAccess(\'' + u._id + '\')" title="Toggle Access"><i class="fas fa-key"></i></button>';
+            html += '<button class="btn btn-danger btn-icon btn-sm" onclick="deleteUser(\'' + u._id + '\')" title="Delete"><i class="fas fa-trash"></i></button>';
+            html += '</div></td>';
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    async function addUser() {
+        var name = document.getElementById('newUserName').value.trim();
+        var phone = document.getElementById('newUserPhone').value.trim();
+        var plan = document.getElementById('newUserPlan').value;
+        var days = parseInt(document.getElementById('newUserDays').value) || 0;
+
+        if (!name || !phone) {
+            showToast('Name and phone are required', 'error');
+            return;
+        }
+
+        var result = await api('/users', {
+            method: 'POST',
+            body: JSON.stringify({ name: name, phone: phone, plan: plan, days: days })
+        });
+
+        if (result) {
+            showToast('User ' + name + ' added successfully', 'success');
+            closeModal('addUserModal');
+            usersCache = [];
+            renderUsers();
+            loadDashboard();
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserPhone').value = '';
+            document.getElementById('newUserDays').value = '30';
+        }
+    }
+
+    async function toggleUserAccess(id) {
+        var result = await api('/users/' + id + '/toggle-access', { method: 'PUT' });
+        if (result) {
+            var msg = result.accessStatus === 'active' ? 'Access granted to ' + result.name : 'Access revoked for ' + result.name;
+            var type = result.accessStatus === 'active' ? 'success' : 'warning';
+            showToast(msg, type);
+            usersCache = [];
+            renderUsers();
+            loadDashboard();
+        }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+        var result = await api('/users/' + id, { method: 'DELETE' });
+        if (result) {
+            showToast('User deleted', 'error');
+            usersCache = [];
+            renderUsers();
+            loadDashboard();
+        }
+    }
+
+    async function viewUser(id) {
+        var user = null;
+        for (var i = 0; i < usersCache.length; i++) {
+            if (usersCache[i]._id === id) { user = usersCache[i]; break; }
+        }
+        if (!user) return;
+
+        // Payments load if empty
+        if (paymentsCache.length === 0) {
+            paymentsCache = (await api('/payments')) || [];
+        }
+        var up = [];
+        for (var i = 0; i < paymentsCache.length; i++) {
+            if (paymentsCache[i].userPhone === user.phone) up.push(paymentsCache[i]);
+        }
+
+        var exp = user.expiresAt ? new Date(user.expiresAt).toLocaleDateString() : 'N/A';
+        var sc = user.accessStatus === 'active' ? 'active' : 'expired';
+
+        var html = '';
+        html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">';
+        html += '<div style="width:56px;height:56px;border-radius:14px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--accent);">' + user.name.charAt(0) + '</div>';
+        html += '<div><h3 style="font-size:18px;font-weight:700;">' + user.name + '</h3>';
+        html += '<span style="font-family:JetBrains Mono,monospace;font-size:13px;color:var(--text-muted);">' + user.phone + '</span></div></div>';
+
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">';
+        html += '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Plan</div><div style="font-size:15px;font-weight:700;text-transform:capitalize;">' + user.plan + '</div></div>';
+        html += '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Status</div><span class="status-badge ' + sc + '"><span class="dot-sm"></span> ' + user.accessStatus.charAt(0).toUpperCase() + user.accessStatus.slice(1) + '</span></div>';
+        html += '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Expires</div><div style="font-size:13px;font-family:JetBrains Mono,monospace;">' + exp + '</div></div>';
+        html += '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Messages</div><div style="font-size:15px;font-weight:700;font-family:JetBrains Mono,monospace;">' + (user.messageCount || 0) + '</div></div>';
+        html += '</div>';
+
+        html += '<h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">Payment History (' + up.length + ')</h4>';
+        if (up.length === 0) {
+            html += '<p style="font-size:12px;color:var(--text-muted);">No payments found</p>';
+        } else {
+            for (var i = 0; i < up.length; i++) {
+                var p = up[i];
+                html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(36,61,46,0.3);font-size:13px;">';
+                html += '<span>Rs.' + p.amount.toLocaleString() + ' - ' + p.plan + '</span>';
+                html += '<span class="status-badge ' + p.status + '"><span class="dot-sm"></span> ' + p.status.charAt(0).toUpperCase() + p.status.slice(1) + '</span>';
+                html += '</div>';
+            }
+        }
+
+        document.getElementById('viewUserContent').innerHTML = html;
+        openModal('viewUserModal');
+    }
+
+    // ============================================
+    // AUTO REPLY RULES
+    // ============================================
+    async function renderReplies() {
+        repliesCache = (await api('/bot/replies')) || [];
+        var grid = document.getElementById('repliesGrid');
+
+        if (repliesCache.length === 0) {
+            grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px;">No reply rules yet. Click "New Rule" to add one.</p>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < repliesCache.length; i++) {
+            var r = repliesCache[i];
+            var activeClass = r.active ? 'active' : '';
+            var escResponse = r.response.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            html += '<div class="card">';
+            html += '<div class="card-body" style="padding:16px;">';
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+            html += '<h4 style="font-size:14px;font-weight:700;">' + r.name + '</h4>';
+            html += '<div class="toggle-switch ' + activeClass + '" onclick="toggleReply(\'' + r._id + '\',this)"></div>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
+            html += '<span style="background:var(--info-dim);color:var(--info);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;">' + r.type + '</span>';
+            html += '<span style="background:var(--bg-primary);color:var(--text-muted);font-size:11px;padding:3px 8px;border-radius:6px;font-family:JetBrains Mono,monospace;">"' + r.keyword + '"</span>';
+            html += '</div>';
+            html += '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap;max-height:80px;overflow:hidden;">' + escResponse + '</div>';
+            html += '<div style="display:flex;justify-content:flex-end;margin-top:12px;">';
+            html += '<button class="btn btn-danger btn-sm" onclick="deleteReply(\'' + r._id + '\')"><i class="fas fa-trash"></i> Delete</button>';
+            html += '</div></div></div>';
+        }
+        grid.innerHTML = html;
+    }
+
+    async function addReplyRule() {
+        var name = document.getElementById('ruleName').value.trim();
+        var type = document.getElementById('ruleType').value;
+        var keyword = document.getElementById('ruleKeyword').value.trim();
+        var response = document.getElementById('ruleResponse').value.trim();
+
+        if (!name || !keyword || !response) {
+            showToast('All fields are required', 'error');
+            return;
+        }
+
+        var result = await api('/bot/replies', {
+            method: 'POST',
+            body: JSON.stringify({ name: name, type: type, keyword: keyword, response: response })
+        });
+
+        if (result) {
+            showToast('Rule "' + name + '" added successfully', 'success');
+            closeModal('addReplyModal');
+            renderReplies();
+            document.getElementById('ruleName').value = '';
+            document.getElementById('ruleKeyword').value = '';
+            document.getElementById('ruleResponse').value = '';
+        }
+    }
+
+    async function toggleReply(id, el) {
+        var result = await api('/bot/replies/' + id + '/toggle', { method: 'PUT' });
+        if (result) {
+            el.classList.toggle('active');
+            showToast('Rule ' + (result.active ? 'enabled' : 'disabled'), result.active ? 'success' : 'warning');
+            for (var i = 0; i < repliesCache.length; i++) {
+                if (repliesCache[i]._id === id) { repliesCache[i] = result; break; }
+            }
+        }
+    }
+
+    async function deleteReply(id) {
+        if (!confirm('Delete this reply rule?')) return;
+        var result = await api('/bot/replies/' + id, { method: 'DELETE' });
+        if (result) {
+            showToast('Rule deleted', 'error');
+            renderReplies();
+        }
+    }
+
+    // ============================================
+    // CHAT PREVIEW
+    // ============================================
+    async function sendSimMessage() {
+        var msg = document.getElementById('simMessage').value.trim();
+        if (!msg) return;
+
+        // Replies load if empty
+        if (repliesCache.length === 0) {
+            repliesCache = (await api('/bot/replies')) || [];
+        }
+
+        var chatBody = document.getElementById('chatBody');
+        // Clear placeholder
+        if (chatBody.children.length === 1 && chatBody.children[0].style.maxWidth === '100%') {
+            chatBody.innerHTML = '';
+        }
+
+        var now = new Date();
+        var ts = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+        // User message add
+        var userMsg = document.createElement('div');
+        userMsg.className = 'chat-msg incoming';
+        userMsg.innerHTML = escapeHtml(msg) + '<div class="msg-time">' + ts + '</div>';
+        chatBody.appendChild(userMsg);
+
+        // Match rule
+        var text = msg.toLowerCase().trim();
+        var matched = null;
+        for (var i = 0; i < repliesCache.length; i++) {
+            var r = repliesCache[i];
+            if (!r.active) continue;
+            if (r.type === 'exact' && text === r.keyword.toLowerCase()) { matched = r; break; }
+            if (r.type === 'contains' && text.indexOf(r.keyword.toLowerCase()) !== -1) { matched = r; break; }
+            if (r.type === 'regex') {
+                try { if (new RegExp(r.keyword, 'i').test(text)) { matched = r; break; } } catch(e) {}
+            }
+        }
+
+        // Show matched rule info
+        var info = document.getElementById('matchedRuleInfo');
+        if (matched) {
+            info.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:8px;background:var(--success-dim);display:flex;align-items:center;justify-content:center;color:var(--success);"><i class="fas fa-check"></i></div><div><div style="font-size:13px;font-weight:600;">Matched: ' + matched.name + '</div><div style="font-size:11px;color:var(--text-muted);">Type: ' + matched.type + ' | Keyword: "' + matched.keyword + '"</div></div></div>';
+        } else {
+            info.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:8px;background:var(--warning-dim);display:flex;align-items:center;justify-content:center;color:var(--warning);"><i class="fas fa-question"></i></div><div><div style="font-size:13px;font-weight:600;color:var(--warning);">No Match Found</div><div style="font-size:11px;color:var(--text-muted);">Default reply will be sent</div></div></div>';
+        }
+
+        // Bot reply after delay
+        setTimeout(function() {
+            var replyText = matched ? matched.response : 'Sorry, I could not understand your message. Type "menu" to see available options.';
+            var botMsg = document.createElement('div');
+            botMsg.className = 'chat-msg outgoing';
+            botMsg.innerHTML = replyText.replace(/\n/g, '<br>') + '<div class="msg-time">' + ts + '</div>';
+            chatBody.appendChild(botMsg);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }, 2000);
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+        document.getElementById('simMessage').value = '';
+    }
+
+    function quickSim(t) {
+        document.getElementById('simMessage').value = t;
+        sendSimMessage();
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // ============================================
+    // LOGS
+    // ============================================
+    async function renderLogs() {
+        var filter = document.getElementById('logFilter') ? document.getElementById('logFilter').value : 'all';
+        var logs = await api('/bot/logs?limit=100&type=' + filter);
+        var c = document.getElementById('logsContainer');
+
+        if (!logs || logs.length === 0) {
+            c.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px 0;">No logs found</p>';
+            return;
+        }
+
+        var icons = { sent: 'fa-paper-plane', received: 'fa-inbox', error: 'fa-exclamation', system: 'fa-cog' };
+        var html = '';
+        for (var i = 0; i < logs.length; i++) {
+            var l = logs[i];
+            html += '<div class="log-entry">';
+            html += '<span class="log-time">' + l.time + '</span>';
+            html += '<div class="log-icon ' + l.type + '"><i class="fas ' + (icons[l.type] || 'fa-info') + '"></i></div>';
+            html += '<span style="font-size:12.5px;color:var(--text-secondary);line-height:1.4;">' + l.message + '</span>';
+            html += '</div>';
+        }
+        c.innerHTML = html;
+    }
+
+    async function clearLogs() {
+        if (!confirm('Clear all logs from database? This cannot be undone.')) return;
+        var result = await api('/bot/logs', { method: 'DELETE' });
+        if (result) {
+            showToast('All logs cleared', 'info');
+            renderLogs();
+        }
+    }
+
+    // ============================================
+    // SETTINGS
+    // ============================================
+    async function testDB() {
+        showToast('Testing database connection...', 'info');
+        var stats = await api('/bot/stats');
+        if (stats) {
+            showToast('Database connected! ' + stats.totalUsers + ' users found.', 'success');
+        }
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    var pageTitles = {
+        dashboard: ['Dashboard', 'Real-time bot overview'],
+        payments: ['Payment Approvals', 'Review and manage payments'],
+        users: ['User Management', 'Manage access and subscriptions'],
+        replies: ['Auto-Reply Rules', 'Message response templates'],
+        chatpreview: ['Chat Preview', 'Test bot responses live'],
+        logs: ['Activity Logs', 'Bot activity history'],
+        connection: ['Connection', 'WhatsApp connection status'],
+        settings: ['Settings', 'Database and security']
+    };
+
+    function switchPage(page, el) {
+        // Hide all sections
+        var sections = document.querySelectorAll('.page-section');
+        for (var i = 0; i < sections.length; i++) sections[i].classList.remove('active');
+        document.getElementById('page-' + page).classList.add('active');
+
+        // Update nav
+        var items = document.querySelectorAll('.nav-item');
+        for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
+        if (el) el.classList.add('active');
+
+        // Update title
+        if (pageTitles[page]) {
+            document.getElementById('pageTitle').textContent = pageTitles[page][0];
+            document.getElementById('pageSubtitle').textContent = pageTitles[page][1];
+        }
+
+        closeSidebar();
+
+        // Load data for each page
+        if (page === 'payments') { paymentsCache = []; renderPayments(); }
+        if (page === 'users') { usersCache = []; renderUsers(); }
+        if (page === 'replies') renderReplies();
+        if (page === 'logs') renderLogs();
+        if (page === 'dashboard') loadDashboard();
+        if (page === 'connection') checkConnectionStatus();
+    }
+
+    // ============================================
+    // UI HELPERS
+    // ============================================
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+
+    // Close modal on overlay click
+    var modals = document.querySelectorAll('.modal-overlay');
+    for (var i = 0; i < modals.length; i++) {
+        (function(m) {
+            m.addEventListener('click', function(e) {
+                if (e.target === m) m.classList.remove('show');
+            });
+        })(modals[i]);
+    }
+
+    // ============================================
+    // AUTO START - token එක තියෙනම් auto login
+    // ============================================
+    if (token) {
+        document.getElementById('loginScreen').style.display = 'none';
+        initApp();
+    }
+    </script>
+</body>
+</html>
